@@ -2,7 +2,6 @@
 
 import funkin.Highscore;
 import funkin.play.PlayState;
-import funkin.play.scoring.Scoring;
 import funkin.modding.module.Module;
 import funkin.modding.events.ScriptEvent;
 import funkin.Preferences;
@@ -31,36 +30,35 @@ class InfobarModule extends Module {
     super("InfobarModule");
   }
 
-  var curState:PlayState;
   var comboBreaks:Int = 0;
-  var misses:Int = 0;
+  var hold_misses:Int = 0;
   var accuracy:Float = 0.0;
   var tallyScore:Int = 0;
   var maxTallyScore:Int = 0;
 
   var last_comboBreaks:Int = 0;
   var last_combo:Int = 0;
-  var last_tns:Int = 0;
+  var last_tnh:Int = 0;
   var miss_text:FlxText;
   var acc_text:FlxText;
 
   /**
    * Traces on player hit. Useful for debugging.
-   * @param text what do you think?
+   * @param text Self-explanitory.
    */
   function traceOnPlayerNoteHit(text:Str) {
-    if (Highscore.tallies.totalNotesHit > last_tns) {
+    if (Highscore.tallies.totalNotesHit > last_tnh) {
       trace(text);
-      last_tns = Highscore.tallies.totalNotesHit;
+      last_tnh = Highscore.tallies.totalNotesHit;
     }
   }
   
   /**
-   * Creates the text, had to do it twice. I may need to make this a seperate function.
+   * Creates the text. The logic was stolen from the score text lmao.
    * @param cur_state checks for the current state, curState broke somehow.
    */
   function createText(cur_state:PlayState) {
-    infoBarYPos = Preferences.downscroll ? FlxG.height * 0.1 : FlxG.height * 0.9;
+    infoBarYPos = Preferences.downscroll ? FlxG.height * 0.1 : FlxG.height * 0.9; // this is the math they calculated to place the score text's y pos
     miss_text = new FlxText(FlxG.width / 2 - 280, infoBarYPos + 30, 0, 'Combo Breaks: 0 (?)', 16);
     acc_text = new FlxText(FlxG.width / 2 - 50, infoBarYPos + 30, 0, 'Accuracy: N/A%', 16);
     miss_text.setFormat(Paths.font('vcr.ttf'), 16, 0xFFFFFFFF, 'CENTER' /**i have no idea how i do this, pls help me**/, FlxTextBorderStyle.OUTLINE, 0xFF000000);
@@ -78,7 +76,7 @@ class InfobarModule extends Module {
 
   /**
    * Returns a respective "miss rank" to the text.
-   * @param comboBreaks do i have to explain it?
+   * @param comboBreaks Self-explanitory.
    */
   function missInfo(comboBreaks:Int) {
     if (comboBreaks < 1 && Highscore.tallies.good < 1) return ' (PFC)';
@@ -91,7 +89,7 @@ class InfobarModule extends Module {
    * Resets the text. Self-explanitory.
    */
   function resetText() {
-    misses = 0;
+    hold_misses = 0;
     accuracy = 0.0;
     tallyScore = 0;
     maxTallyScore = 0;
@@ -110,21 +108,19 @@ class InfobarModule extends Module {
   }
   
   /**
-   * Calculates the misses, hits, judgements, and stuff
+   * Calculates the judgements, accuracy, and stuff
    * This stumped me for a while lol.
    */
   function calcTallyAndUpdateText() {
     tallyScore = (Highscore.tallies.sick + Highscore.tallies.good - Highscore.tallies.missed);
     maxTallyScore = Highscore.tallies.totalNotesHit + Highscore.tallies.missed;
-    comboBreaks = Highscore.tallies.bad + Highscore.tallies.shit + misses + Highscore.tallies.missed; 
-    // misses, btw, are just hold note misses. nothing special
+    comboBreaks = Highscore.tallies.bad + Highscore.tallies.shit + hold_misses + Highscore.tallies.missed; 
     
     if (maxTallyScore >= 1) {
-      if (Highscore.tallies.combo < last_combo && comboBreaks <= last_comboBreaks) {
-        misses += 1;
-      } // Again, this stumped me for a while. Wonder why... ^^^
+      if (Highscore.tallies.combo < last_combo && comboBreaks <= last_comboBreaks) hold_misses += 1;
+      // Again, this stumped me for a while. I wonder why... (Hint: the code you're looking at rn.)
       
-      accuracy = (tallyScore / maxTallyScore);
+      accuracy = accuracy < 0 ? 0 : (tallyScore / maxTallyScore);
       miss_text.text = 'Combo Breaks: ' + (comboBreaks) + missInfo(comboBreaks);
       acc_text.text = 'Accuracy: '+ FlxMath.roundDecimal(accuracy * 100, 2) +'%';
     }
@@ -137,7 +133,7 @@ class InfobarModule extends Module {
    */
   
   override function onStateChangeBegin(state:StateChangeScriptEvent) {
-    trace('Infobar >>> State change begin started! ' + state);
+    trace('Infobar >>> State changed! ' + state);
     resetText();
   }
   
@@ -145,7 +141,6 @@ class InfobarModule extends Module {
     super.onSongLoaded(event);
     
     var state:PlayState = PlayState.instance;
-    curState = state;
     createText(state);
     resetText();
   }
