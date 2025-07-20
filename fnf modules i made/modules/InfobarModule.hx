@@ -1,4 +1,4 @@
-// Uh oh. I don't think github doesn't recognize .hxc files as Haxe.
+// Uh oh. I don't think github doesn't recognize .hxc files as Haxe. I'm just gonna rename this to a .hx file temporarily.
 
 import funkin.Highscore;
 import funkin.play.PlayState;
