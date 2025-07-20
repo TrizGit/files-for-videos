@@ -1,3 +1,5 @@
+// Uh oh. I don't think github doesn't recognize .hxc files as Haxe.
+
 import funkin.Highscore;
 import funkin.play.PlayState;
 import funkin.play.scoring.Scoring;
