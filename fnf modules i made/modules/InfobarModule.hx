@@ -82,7 +82,7 @@ class InfobarModule extends Module {
     if (comboBreaks < 1 && Highscore.tallies.good < 1) return ' (PFC)';
     else if (comboBreaks < 1) return ' (GFC)';
     else if (comboBreaks < 10) return ' (SDCB)';
-    else return ' (Clear)';
+    else return '';
   }
   
   /**
