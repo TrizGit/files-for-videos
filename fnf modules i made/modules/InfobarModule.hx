@@ -58,7 +58,7 @@ class InfobarModule extends Module {
    * @param cur_state checks for the current state, curState broke somehow.
    */
   function createText(cur_state:PlayState) {
-    infoBarYPos = Preferences.downscroll ? FlxG.height * 0.1 : FlxG.height * 0.9; // this is the math they calculated to place the score text's y pos
+    infoBarYPos = (Preferences.downscroll) ? FlxG.height * 0.1 : FlxG.height * 0.9; // this is the math they calculated to place the score text's y pos
     miss_text = new FlxText(FlxG.width / 2 - 280, infoBarYPos + 30, 0, 'Combo Breaks: 0 (?)', 16);
     acc_text = new FlxText(FlxG.width / 2 - 50, infoBarYPos + 30, 0, 'Accuracy: N/A%', 16);
     miss_text.setFormat(Paths.font('vcr.ttf'), 16, 0xFFFFFFFF, 'CENTER' /**i have no idea how i do this, pls help me**/, FlxTextBorderStyle.OUTLINE, 0xFF000000);
@@ -118,9 +118,9 @@ class InfobarModule extends Module {
     
     if (maxTallyScore >= 1) {
       if (Highscore.tallies.combo < last_combo && comboBreaks <= last_comboBreaks) hold_misses += 1;
-      // Again, this stumped me for a while. I wonder why... (Hint: the code you're looking at rn.)
+      // Again, this stumped me for a while. I wonder why... (Hint: the line you're looking at rn.)
       
-      accuracy = accuracy < 0 ? 0 : (tallyScore / maxTallyScore);
+      accuracy = ((tallyScore / maxTallyScore) < 0) ? 0 : (tallyScore / maxTallyScore);
       miss_text.text = 'Combo Breaks: ' + (comboBreaks) + missInfo(comboBreaks);
       acc_text.text = 'Accuracy: '+ FlxMath.roundDecimal(accuracy * 100, 2) +'%';
     }
