@@ -15,7 +15,7 @@ import flixel.text.FlxTextBorderStyle;
 /**
  * A simple info bar, mimicking the codename engine version...
  * Well, minus the ranks, plus the combo breaks (not misses), following the current accuracy system,
- * made by a beginner, logic referenced from this https://gamebanana.com/mods/510941 (by Raltyro),
+ * made by a beginner, logic referenced from this https://github.com/Raltyro/kade-hud-fnf-vslice (by Raltyro),
  * 
  * ...
  * 
