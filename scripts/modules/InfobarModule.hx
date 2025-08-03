@@ -37,6 +37,7 @@ class InfobarModule extends Module {
   var comboBreaks:Int = 0;
   var hold_misses:Int = 0;
   var accuracy:Float = 0.0;
+  var percentAcc:Float = 0.0;
   var tallyScore:Int = 0;
   var maxTallyScore:Int = 0;
   var screenCenter:Float = FlxG.width / 2;
@@ -81,7 +82,7 @@ class InfobarModule extends Module {
     miss_text.cameras = [cur_state.camHUD];
     cur_state.add(miss_text);
     
-    acc_text = new FlxText(screenCenter - 75, infoBarYPos + 30, 0, 'Accuracy: N/A%', 16);
+    acc_text = new FlxText(screenCenter - 70, infoBarYPos + 30, 0, 'Accuracy: N/A%', 16);
     acc_text.setFormat(Paths.font('vcr.ttf'), 16, 0xFFFFFFFF, 'CENTER' /**i have no idea how i do this, pls help me**/, FlxTextBorderStyle.OUTLINE, 0xFF000000);
     acc_text.scrollFactor.set();
     acc_text.zIndex = 802;
@@ -104,9 +105,9 @@ class InfobarModule extends Module {
   /**
    * Moves the accuracy text's X position slightly.
    * ...hey, i want it to look good.
-   * @param accCheck Checks the current accuracy.
+   * Besides, they seem to forget to add the FlxTextAlign api.
    */
-  function changeAccTextX(accCheck:Float) {
+  function changeAccTextX() {
     // First, create a variable for one, two, and three digits of comboBreaks
     // (four digits? maybe)
     var one_digit = 70;
@@ -117,19 +118,19 @@ class InfobarModule extends Module {
     if (comboBreaks == 0 && Highscore.tallies.totalNotesHit == 0) return;
 
     // And now it's position change galore (i hope you can read this lol)
-    if (comboBreaks < 9) {
-      if ((accCheck * 100) % 1 == 0) acc_text.setPosition(screenCenter - one_digit, infoBarYPos + 30);
+    if (comboBreaks < 10) {
+      if (percentAcc % 1 == 0) acc_text.setPosition(screenCenter - one_digit, infoBarYPos + 30);
       else acc_text.setPosition(screenCenter - one_digit - 16, infoBarYPos + 30);
     }
-    else if (comboBreaks < 99) {
-      if ((accCheck * 100) % 1 == 0) acc_text.setPosition(screenCenter - two_digit, infoBarYPos + 30);
+    else if (comboBreaks < 100) {
+      if (percentAcc % 1 == 0) acc_text.setPosition(screenCenter - two_digit, infoBarYPos + 30);
       else acc_text.setPosition(screenCenter - two_digit - 16, infoBarYPos + 30);
     }    
     else {
-      if ((accCheck * 100) % 1 == 0) acc_text.setPosition(screenCenter - three_digit, infoBarYPos + 30);
+      if (percentAcc % 1 == 0) acc_text.setPosition(screenCenter - three_digit, infoBarYPos + 30);
       else acc_text.setPosition(screenCenter - three_digit - 16, infoBarYPos + 30);
     }
-    traceOnPlayerNoteHit('accCheck='+accCheck); // Debugging purposes
+    traceOnPlayerNoteHit('percentAcc='+percentAcc); // Debugging purposes
   }
   
   /**
@@ -140,12 +141,6 @@ class InfobarModule extends Module {
     accuracy = 0.0;
     tallyScore = 0;
     maxTallyScore = 0;
-    /**
-     * Huh? oh yeah. 
-     * Since the resets happens not only on a song restart, but also during state changes (see below),
-     * Funkin decides to throw an error if it happens outside of PlayState.
-     * Since i don't know what to do with it tho, i just put it in a try {} catch () {} function. (beginner moment)
-     */
     try {
       miss_text.text = 'Combo Breaks: 0';
       acc_text.text = 'Accuracy: N/A%';
@@ -161,13 +156,14 @@ class InfobarModule extends Module {
   function calcTallyAndUpdateText() {
     tallyScore = (Highscore.tallies.sick + Highscore.tallies.good - Highscore.tallies.missed);
     maxTallyScore = Highscore.tallies.totalNotesHit + Highscore.tallies.missed;
-    comboBreaks = Highscore.tallies.bad + Highscore.tallies.shit + hold_misses + Highscore.tallies.missed; 
+    comboBreaks = Highscore.tallies.bad + Highscore.tallies.shit + hold_misses + Highscore.tallies.missed;
     
     if (maxTallyScore >= 1) {
       if (Highscore.tallies.combo < last_combo && comboBreaks <= last_comboBreaks) hold_misses += 1;
       // Again, this stumped me for a while. I wonder why... (Hint: the line you're looking at rn.)
       
       accuracy = ((tallyScore / maxTallyScore) < 0) ? 0 : (tallyScore / maxTallyScore);
+      percentAcc = FlxMath.roundDecimal(accuracy * 100, 2); // Makes it's a percentage format (i.e 93.23%)
       miss_text.text = 'Combo Breaks: ' + (comboBreaks);
       acc_text.text = 'Accuracy: ' + accInfo(accuracy);
     }
@@ -175,10 +171,7 @@ class InfobarModule extends Module {
     last_combo = Highscore.tallies.combo;
   }
 
-  // From here, it's just override functions. I don't need to explain them.
-  override function onStateChangeBegin(state:StateChangeScriptEvent) {
-    resetText();
-  }
+  // From here, it's just override functions. I don't (really) need to explain them.
   
   override function onSongLoaded(event:SongLoadScriptEvent) {
     super.onSongLoaded(event);
@@ -196,7 +189,7 @@ class InfobarModule extends Module {
   override function onUpdate(event:ScriptEvent):Void {
     super.onUpdate(event);
     calcTallyAndUpdateText();
-    changeAccTextX(FlxMath.roundDecimal(accuracy, 4));
+    changeAccTextX();
   }
 
   override function onSongRetry(event:SongRetryEvent) {
