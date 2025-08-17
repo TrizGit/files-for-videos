@@ -9,16 +9,19 @@ import funkin.play.PlayState;
 import funkin.modding.module.Module;
 import funkin.modding.events.ScriptEvent;
 import funkin.Preferences;
+import funkin.save.Save;
 
 import flixel.FlxState;
 import flixel.FlxG;
 import flixel.math.FlxMath;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
+import flixel.text.FlxTextFormat;
+import flixel.util.FlxColor;
 
 /**
- * A simple info bar, mimicking the codename engine version...
- * Well, minus the ranks, combo breaks instead of misses, following the current accuracy system,
+ * A simple info bar, (actually) mimicking codename engine (this time)...
+ * Well, it's named combo breaks instead of misses, following the current accuracy system,
  * made by a beginner, logic referenced from this https://github.com/Raltyro/kade-hud-fnf-vslice (by Raltyro),
  * 
  * ...
@@ -37,14 +40,16 @@ class InfobarModule extends Module {
   var comboBreaks:Int = 0;
   var hold_misses:Int = 0;
   var accuracy:Float = 0.0;
-  var percentAcc:Float = 0.0;
   var tallyScore:Int = 0;
   var maxTallyScore:Int = 0;
   var screenCenter:Float = FlxG.width / 2;
 
+  var rankInfo = null;
+
   var last_comboBreaks:Int = 0;
   var last_combo:Int = 0;
-  var last_tnh:Int = 0; // Debugging purposes (pls don't comment this)
+  var last_tnh:Int = 0; // Debugging purposes (but pls don't comment this)
+
   var miss_text:FlxText;
   var acc_text:FlxText;
   
@@ -68,26 +73,43 @@ class InfobarModule extends Module {
       last_tnh = Highscore.tallies.totalNotesHit;
     }
   }
+
+  /**
+   * Colors the last letter of a text. I hate to do this so much.
+   * @param text The text. FlxText.
+   */
+  function colorMeSurprise(text:FlxText, color:Int) {
+    var textLength = text.text.length;
+    // Is it a bad idea to put it in onUpdate?
+    try {
+      text.clearFormats();
+      text.addFormat(new FlxTextFormat(color), textLength - 1, textLength);
+    } catch (e:Dynamic) {
+      traceTG('An error has occured! ['+e+']');
+    }
+  }
     
   /**
    * Creates the text. The text creation logic was stolen from the score text lmao.
-   * @param cur_state Checks for the current state.
+   * @param cur_state Checks for the current state. (I have no idea why i added this.)
    */
   function createText(cur_state:PlayState) {
     infoBarYPos = (Preferences.downscroll) ? FlxG.height * 0.1 : FlxG.height * 0.9; // this is the math they calculated to place the score text's y pos
-    miss_text = new FlxText(screenCenter - 280, infoBarYPos + 30, 0, 'Combo Breaks: 0', 16);
-    miss_text.setFormat(Paths.font('vcr.ttf'), 16, 0xFFFFFFFF, 'CENTER' /**i have no idea how i do this, pls help me**/, FlxTextBorderStyle.OUTLINE, 0xFF000000);
+
+    miss_text = new FlxText(screenCenter - 65, infoBarYPos + 30, 0, 'Combo Breaks: 0', 16);
+    miss_text.setFormat(Paths.font('vcr.ttf'), 16, 0xFFFFFF, 'CENTER', FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
     miss_text.scrollFactor.set();
     miss_text.zIndex = 802;
     miss_text.cameras = [cur_state.camHUD];
     cur_state.add(miss_text);
     
-    acc_text = new FlxText(screenCenter - 70, infoBarYPos + 30, 0, 'Accuracy: N/A%', 16);
-    acc_text.setFormat(Paths.font('vcr.ttf'), 16, 0xFFFFFFFF, 'CENTER' /**i have no idea how i do this, pls help me**/, FlxTextBorderStyle.OUTLINE, 0xFF000000);
+    acc_text = new FlxText(screenCenter - 280, infoBarYPos + 30, 0, 'Accuracy: N/A% - ?', 16);
+    acc_text.setFormat(Paths.font('vcr.ttf'), 16, 0xFFFFFF, 'CENTER', FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
     acc_text.scrollFactor.set();
     acc_text.zIndex = 802;
     acc_text.cameras = [cur_state.camHUD];
     cur_state.add(acc_text);
+
     traceTG('The texts are created!');
   }
 
@@ -96,41 +118,33 @@ class InfobarModule extends Module {
    * There's only PFC and GFC since bads and shits are considered misses.
    * @param accCheck Checks the current accuracy. (I don't know why, but it's better.)
    */
-  function accInfo(accCheck:Int) {
+  function accInfo(accCheck:Float) {
     if (accCheck == 1 && Highscore.tallies.good < 1) return 'PFC%';
     else if (accCheck == 1) return 'GFC%';
-    else return FlxMath.roundDecimal(accuracy * 100, 2) +'%';
+    else return FlxMath.roundDecimal(accCheck * 100, 2) +'%';
   }
 
   /**
-   * Moves the accuracy text's X position slightly.
-   * ...hey, i want it to look good.
-   * Besides, they seem to forget to add the FlxTextAlign api.
+   * Returns a song rank. Rank is actually based on the rank system in v-slice.
+   * @param accCheck Checks the current accuracy. (I don't know why, but it's better.)
    */
-  function changeAccTextX() {
-    // First, create a variable for one, two, and three digits of comboBreaks
-    // (four digits? maybe)
-    var one_digit = 70;
-    var two_digit = 65;
-    var three_digit = 60;
-
-    // Then checks if the player has hit (or missed) a note yet.
-    if (comboBreaks == 0 && Highscore.tallies.totalNotesHit == 0) return;
-
-    // And now it's position change galore (i hope you can read this lol)
-    if (comboBreaks < 10) {
-      if (percentAcc % 1 == 0) acc_text.setPosition(screenCenter - one_digit, infoBarYPos + 30);
-      else acc_text.setPosition(screenCenter - one_digit - 16, infoBarYPos + 30);
+  function accRank(accCheck:Float):{rank:Str, color:Int} {
+    return switch (true) { // Figured out how to use the switch function :)
+      case accCheck == 1.0 && Highscore.tallies.good < 1: // Perfect Gold
+        {rank: 'P', color: 0xFFB619};
+      case accCheck == 1.0: // Perfect
+        {rank: 'P', color: 0xFF58B4};
+      case accCheck >= 0.9: // Excellent
+        {rank: 'E', color: 0xFDCB42};
+      case accCheck >= 0.8: // Great
+        {rank: 'G', color: 0xEAF6FF};
+      case accCheck >= 0.6: // Good
+        {rank: 'G', color: 0xEF8764};
+      case accCheck < 0.6: // Shit (or Loss)
+        {rank: 'L', color: 0x6044FF};
+      default:
+        {rank: '?', color: 0xFFFFFF};
     }
-    else if (comboBreaks < 100) {
-      if (percentAcc % 1 == 0) acc_text.setPosition(screenCenter - two_digit, infoBarYPos + 30);
-      else acc_text.setPosition(screenCenter - two_digit - 16, infoBarYPos + 30);
-    }    
-    else {
-      if (percentAcc % 1 == 0) acc_text.setPosition(screenCenter - three_digit, infoBarYPos + 30);
-      else acc_text.setPosition(screenCenter - three_digit - 16, infoBarYPos + 30);
-    }
-    traceOnPlayerNoteHit('percentAcc='+percentAcc); // Debugging purposes
   }
   
   /**
@@ -143,7 +157,7 @@ class InfobarModule extends Module {
     maxTallyScore = 0;
     try {
       miss_text.text = 'Combo Breaks: 0';
-      acc_text.text = 'Accuracy: N/A%';
+      acc_text.text = 'Accuracy: N/A% - ?';
     } catch (e:Dynamic) {
       traceTG('An error has occured! ['+e+']');
     }
@@ -162,10 +176,15 @@ class InfobarModule extends Module {
       if (Highscore.tallies.combo < last_combo && comboBreaks <= last_comboBreaks) hold_misses += 1;
       // Again, this stumped me for a while. I wonder why... (Hint: the line you're looking at rn.)
       
-      accuracy = ((tallyScore / maxTallyScore) < 0) ? 0 : (tallyScore / maxTallyScore);
-      percentAcc = FlxMath.roundDecimal(accuracy * 100, 2); // Makes it's a percentage format (i.e 93.23%)
-      miss_text.text = 'Combo Breaks: ' + (comboBreaks);
-      acc_text.text = 'Accuracy: ' + accInfo(accuracy);
+      try {
+        rankInfo = accRank(accuracy);
+        accuracy = ((tallyScore / maxTallyScore) < 0) ? 0 : (tallyScore / maxTallyScore);
+        miss_text.text = 'Combo Breaks: ' + (comboBreaks);
+        acc_text.text = 'Accuracy: ' + accInfo(accuracy) + ' - ' + rankInfo.rank;
+        colorMeSurprise(acc_text, rankInfo.color);
+      } catch (e:Dynamic) {
+        traceTG('An error has occured! ['+e+']');
+      }
     }
     last_comboBreaks = comboBreaks;
     last_combo = Highscore.tallies.combo;
@@ -189,7 +208,6 @@ class InfobarModule extends Module {
   override function onUpdate(event:ScriptEvent):Void {
     super.onUpdate(event);
     calcTallyAndUpdateText();
-    changeAccTextX();
   }
 
   override function onSongRetry(event:SongRetryEvent) {
