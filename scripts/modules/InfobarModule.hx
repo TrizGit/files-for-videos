@@ -210,7 +210,7 @@ class InfobarModule extends Module {
     else if (comboBreaks < 100) miss_text.x = screenCenter - x_offset + (acc_text_math * 6 - acc_text_math * 4) - 10;
     else                        miss_text.x = screenCenter - x_offset - 12;
 
-    traceOnPlayerNoteHit('\nAcc Text: ' + acc_text.text.length + ' | Miss Text: ' + miss_text.text.length + '\nThe math: ' + miss_text.x);
+    // traceOnPlayerNoteHit('\nAcc Text: ' + acc_text.text.length + ' | Miss Text: ' + miss_text.text.length + '\nThe math: ' + miss_text.x);
   }
 
   // From here, it's just override functions. I don't (really) need to explain them, soooooooooooooo..... reading past this is basically useless.
@@ -240,3 +240,4 @@ class InfobarModule extends Module {
     acc_text.destroy();
   }
 }
+
