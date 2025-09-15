@@ -35,7 +35,7 @@ class InfobarModule extends Module {
   
   var miss_text:FlxText;
   var acc_text:FlxText;
-  var x_offset:Int = 63; // "what's this?" | check the xChangeByLength [line 203] function, i dare you.
+  var x_offset:Int = 63; // "what's this?" | check the xChangeByLength [line 186] function, i dare you.
   
   // Fun fact: I like to put stuff as a new function so i don't get confused... and i think you got confused. Oh well.
   
@@ -223,3 +223,4 @@ class InfobarModule extends Module {
     acc_text.destroy();
   }
 }
+
