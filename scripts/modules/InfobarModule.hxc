@@ -13,21 +13,9 @@ import flixel.text.FlxTextBorderStyle;
 import flixel.text.FlxTextFormat;
 import flixel.util.FlxColor;
 
-/**
- * A simple info bar, (actually) mimicking codename engine (this time)...
- * Well, it's named combo breaks instead of misses, following the current accuracy system,
- * made by a beginner, logic referenced from this https://github.com/Raltyro/kade-hud-fnf-vslice (by Raltyro),
- * 
- * ...
- * 
- * Just know that if you're an experienced programmer, try to fix this mess that i made. --Triz Game (aaaaaaaaaaaaaaaaaaa-)
- * 
- * (god, i hate forgetting to add ; to almost every line.)
- */
-
 class InfobarModule extends Module {
 
-  function new() {
+  public function new() {
     super("InfobarModule");
   }
 
@@ -90,7 +78,8 @@ class InfobarModule extends Module {
    */
   function createText(cur_state:PlayState) {
     infoBarYPos = (Preferences.downscroll) ? FlxG.height * 0.1 : FlxG.height * 0.9; // this is the math they calculated to place the score text's y pos
-    
+    #if mobile infoBarYPos = FlxG.height * 0.1 #end // doesn't matter for mobile, since it's always downscroll
+
     acc_text = new FlxText(screenCenter - 280, infoBarYPos + 30, 0, 'Accuracy: N/A% - ?', 16);
     acc_text.setFormat(Paths.font('vcr.ttf'), 16, 0xFFFFFF, 'CENTER', FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
     acc_text.scrollFactor.set();
@@ -175,7 +164,7 @@ class InfobarModule extends Module {
       /**
        * errors happens to the best of us...
        * update: i just learnt this thing called "Press F5 to dump the cache without restating the engine." -_-, how tf did i not notice this. 
-       * oh well, i'm keeping it incased in this try function.
+       * oh well, i'm still keeping it incased in this try function.
        */
       try {
         rankInfo = accRank(accuracy);
@@ -234,5 +223,3 @@ class InfobarModule extends Module {
     acc_text.destroy();
   }
 }
-
-
