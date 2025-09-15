@@ -1,9 +1,3 @@
-/**
- * Uh oh. I don't think github doesn't recognize .hxc files as Haxe.
- * I'm just gonna rename this to a .hx file temporarily.
- * Remember to change the extension to .hxc, or just download the binary file.
- */
-
 import funkin.Highscore;
 import funkin.play.PlayState;
 import funkin.modding.module.Module;
@@ -240,4 +234,5 @@ class InfobarModule extends Module {
     acc_text.destroy();
   }
 }
+
 
